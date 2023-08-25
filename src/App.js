@@ -1,5 +1,5 @@
 import './App.css';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Header from './components/Header.jsx';
 import LoginForm from './components/LoginForm';
 import RegistrationForm from './components/RegistrationForm';
@@ -7,7 +7,7 @@ import RegistrationForm from './components/RegistrationForm';
 function App() {
   return (
     <>
-      <BrowserRouter>
+      <Router>
         <Header />
         <Routes>
           <Route path="authorization">
@@ -15,7 +15,7 @@ function App() {
             <Route path="registration" element={<RegistrationForm />} />
           </Route>
         </Routes>
-      </BrowserRouter>
+      </Router>
     </>
   );
 }
