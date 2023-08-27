@@ -1,38 +1,70 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { useState, useEffect } from "react";
 
-
-const FlexName = styled.div`
+const RegistrationWrapper = styled.div`
   display: flex;
-  gap: 10px;
-  background-color: black;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: ${(props) => props.backgroundColor || "#fff"};
 `;
 
-const Registration = () => {
+const RegistrationContainer = styled.div`
+  padding: 20px;
+  border: 1px solid #ccc;
+  background-color: grey;
+  border-radius: 10px;
+  animation: fadeIn 0.5s ease-in-out;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
+
+const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+
+const validateEmail = (email) => {
+  return emailRegex.test(email.toLowerCase());
+};
+
+const validatePassword = (password) => {
+  if (password.length === 0) {
+    return "Пароль не може бути порожнім";
+  } else if (password.length < 3 || password.length > 8) {
+    return "Пароль повинен містити від 3 до 8 символів";
+  }
+  return "";
+};
+
+const RegistrationForm = () => {
+    const [firstName, setFirstName] = useState("");
+    const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [emailDirty, setEmailDirty] = useState(false);
   const [passwordDirty, setPasswordDirty] = useState(false);
-  const [emailError, setEmailError] = useState("Email не може бути пустим");
-  const [passwordError, setPasswordError] = useState(
-    "Пароль не може бути пустим"
-  );
-  const [formValid, setFormValid] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
-  useEffect(() => {
-    if (emailError || passwordError) {
-      setFormValid(false);
-    } else {
-      setFormValid(true);
-    }
-  }, [emailError, passwordError]);
+  const firstNameHandler = (e) => {
+    setFirstName(e.target.value);
+  };
+
+  const lastNameHandler = (e) => {
+    setLastName(e.target.value);
+  };
 
   const emailHandler = (e) => {
     setEmail(e.target.value);
-    const re =
-      /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/;
-    if (!re.test(String(e.target.value).toLowerCase())) {
+    setEmailDirty(true);
+    if (!validateEmail(e.target.value)) {
       setEmailError("Некоректний email");
     } else {
       setEmailError("");
@@ -41,59 +73,105 @@ const Registration = () => {
 
   const passwordHandler = (e) => {
     setPassword(e.target.value);
-    if (e.target.value.length < 3 || e.target.value.length > 8) {
-      setPasswordError(
-        "Пароль повинен бути не меншу ніж 3 символи та не більше 8 символів"
-      );
-      if (!e.target.value) {
-        setPasswordError("Пароль не може бути пустим");
-      }
+    setPasswordDirty(true);
+    setPasswordError(validatePassword(e.target.value));
+  };
+
+  const handleRememberMe = () => {
+    setRememberMe(!rememberMe);
+  };
+
+ 
+  const handleRegistration = (e) => {
+    e.preventDefault();
+    if (emailError === "" && passwordError === "" && firstName && lastName) {
+      const user = {
+        firstName,
+        lastName,
+        email,
+        password: rememberMe ? password : "",
+      };
+      localStorage.setItem("user", JSON.stringify(user));
+      setRegistrationSuccess(true);
     } else {
-      setPasswordError("");
+      
+      alert("Будь ласка, заповніть всі обов'язкові поля коректно.");
     }
   };
 
-  const blurHundler = (e) => {
-    switch (e.target.name) {
-      case "email":
-        setEmailDirty(true);
-        break;
-      case "password":
-        setPasswordDirty(true);
-        break;
-    }
-  };
+  const isFormValid = emailError === "" && passwordError === "";
 
   return (
-    <div className="app">
-      <form>
-        <h1>Регістрація</h1>
-        {emailDirty && emailError && (
-          <div style={{ color: "red" }}>{emailError}</div>
+    <RegistrationWrapper backgroundColor="black">
+      <RegistrationContainer>
+        {registrationSuccess ? (
+          <div style={{ textAlign: "center" }}>
+            <h1>Реєстрація успішна!</h1>
+            <p>Ви можете ввійти з використанням ваших облікових даних.</p>
+          </div>
+        ) : (
+          <div className="app">
+            <form onSubmit={handleRegistration}>
+              <h1>Реєстрація</h1>
+              <div>
+              <input
+                onChange={firstNameHandler}
+                value={firstName}
+                name="firstName"
+                type="text"
+                placeholder="Ім'я"
+              />
+              </div>
+              <div>
+              <input
+                onChange={lastNameHandler}
+                value={lastName}
+                name="lastName"
+                type="text"
+                placeholder="Прізвище"
+              />
+              </div>
+              {emailDirty && emailError && <div style={{ color: "red" }}>{emailError}</div>}
+              <div>
+              <input 
+                onChange={emailHandler}
+                value={email}
+                onBlur={() => setEmailDirty(true)}
+                name="email"
+                type="text"
+                placeholder="Введіть ваш email..."
+              />
+              </div>
+              {passwordError && passwordDirty && (
+                <div style={{ color: "red" }}>{passwordError}</div>
+              )}
+              <div>
+              <input
+                onChange={passwordHandler}
+                value={password}
+                onBlur={() => setPasswordDirty(true)}
+                name="password"
+                type="password"
+                placeholder="Введіть ваш пароль..."
+              />
+              </div>
+              <div>
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={handleRememberMe}
+                />
+                <label>Запам'ятати мене</label>
+              </div>
+              <button  disabled={!isFormValid} type="submit">
+                Реєстрація
+              </button>
+            </form>
+          </div>
         )}
-        <input
-          onChange={(e) => emailHandler(e)}
-          value={email}
-          onBlur={(e) => blurHundler(e)}
-          name="email"
-          type="text"
-          placeholder="Введіть ваш email..."
-        />
-        {passwordError && passwordDirty && (
-          <div style={{ color: "red" }}>{passwordError}</div>
-        )}
-        <input
-          onChange={(e) => passwordHandler(e)}
-          value={password}
-          onBlur={(e) => blurHundler(e)}
-          name="password"
-          type="password"
-          placeholder="Введіть ваш пароль..."
-        />
-        <button disabled={!formValid} type="submit">Registration</button>
-      </form>
-    </div>
+      </RegistrationContainer>
+    </RegistrationWrapper>
   );
 };
 
-export default Registration;
+export default RegistrationForm;
